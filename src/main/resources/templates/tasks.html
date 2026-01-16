@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>My Tasks - Final Project</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .task-form { margin-bottom: 30px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .task-list { list-style-type: none; padding: 0; }
+        .task-item { background: #f9f9f9; margin-bottom: 10px; padding: 10px; border-left: 5px solid #2196F3; }
+        .logout-btn { color: red; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2>My Tasks</h2>
+    <a th:href="@{/logout}" class="logout-btn">Logout</a>
+</div>
+
+<div class="task-form">
+    <h3>Add New Task</h3>
+    <form th:action="@{/tasks}" th:object="${newTask}" method="post">
+        <div>
+            <label>Title:</label><br/>
+            <input type="text" th:field="*{title}" placeholder="Task Title" required/>
+        </div>
+        <br/>
+        <div>
+            <label>Description:</label><br/>
+            <textarea th:field="*{description}" placeholder="Task Description"></textarea>
+        </div>
+        <br/>
+        <button type="submit">Add Task</button>
+    </form>
+</div>
+
+<h3>Task List</h3>
+<ul class="task-list">
+    <li th:each="task : ${tasks}" class="task-item">
+        <strong th:text="${task.title}">Task Title</strong>
+        <p th:text="${task.description}">Task Description</p>
+    </li>
+    <li th:if="${#lists.isEmpty(tasks)}">No tasks found. Add one above!</li>
+</ul>
+
+</body>
+</html>
