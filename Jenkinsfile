@@ -1,49 +1,60 @@
 /*
- * Copyright (c) 2026 MukimSoft. All rights reserved.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Jenkins Pipeline for Spring Boot, Docker, and Kubernetes
  */
 
 pipeline {
     agent any
 
+    environment {
+        // Define variables for reuse
+        DOCKER_IMAGE = "mukimsoft/final-project:latest"
+        K8S_NAMESPACE = "ba-cirt-infra"
+    }
+
     stages {
+        // Stage 1: Checkout the code from GitHub
         stage('Checkout') {
             steps {
-                // Pull latest code from Git
                 checkout scm
             }
         }
 
+        // Stage 2: Build JAR file using Maven Wrapper
         stage('Build') {
             steps {
-                // Grant execute permission and build the JAR
                 sh 'chmod +x mvnw'
                 sh './mvnw clean package -DskipTests'
             }
         }
 
+        // Stage 3: Build Docker Image
         stage('Docker Build') {
             steps {
-                // Build docker image with English comments
-                sh 'docker build -t mukimsoft/final-project:latest .'
+                sh "docker build -t ${DOCKER_IMAGE} ."
             }
         }
 
+        // Stage 4: Push Image to Docker Hub
         stage('Push to Registry') {
             steps {
-                // Push image using Jenkins Credentials ID
+                // Ensure the credential ID matches what you created in Jenkins
                 withDockerRegistry([credentialsId: 'docker-hub-creds', url: 'https://index.docker.io/v1/']) {
-                    sh 'docker push mukimsoft/final-project:latest'
+                    sh "docker push ${DOCKER_IMAGE}"
+                }
+            }
+        }
+
+        // Stage 5: Deploy to Kubernetes
+        stage('Kubernetes Deploy') {
+            steps {
+                script {
+                    // Create namespace if it doesn't exist
+                    sh "kubectl get namespace ${K8S_NAMESPACE} || kubectl create namespace ${K8S_NAMESPACE}"
+
+                    // Apply Kubernetes manifests (Deployment and Service)
+                    // Note: Ensure your deployment.yaml is in a folder named 'k8s'
+                    sh "kubectl apply -f k8s/deployment.yaml -n ${K8S_NAMESPACE}"
+                    sh "kubectl apply -f k8s/service.yaml -n ${K8S_NAMESPACE}"
                 }
             }
         }

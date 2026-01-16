@@ -17,7 +17,6 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // Reading credentials from application.properties
     @Value("${spring.security.user.name}")
     private String adminUsername;
 
@@ -27,12 +26,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Disabling CSRF and FrameOptions to allow H2 Console access
-                .csrf(csrf -> csrf.disable())
-                .headers(headers -> headers.frameOptions(frame -> frame.disable()))
-
+                .csrf(csrf -> csrf.disable()) // Required for H2 Console access
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/h2-console/**", "/css/**", "/js/**").permitAll()
+                        // Allow public access to login, H2 console, and static resources
+                        .requestMatchers("/login", "/h2-console/**", "/css/**", "/js/**", "/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -43,14 +40,15 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
-                );
+                )
+                // Required to show H2 Console in a frame
+                .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
     }
 
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        // Creating the user based on property file values
         UserDetails user = User.builder()
                 .username(adminUsername)
                 .password(passwordEncoder.encode(adminPassword))

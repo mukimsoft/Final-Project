@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: final-project-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: final-project
+  template:
+    metadata:
+      labels:
+        app: final-project
+    spec:
+      containers:
+        - name: spring-app
+          image: mukimsoft/final-project:latest
+          ports:
+            - containerPort: 8080
